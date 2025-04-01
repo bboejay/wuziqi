@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wuziqi</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .board { display: grid; grid-template-columns: repeat(15, 40px); justify-content: center; }
+        .cell { width: 40px; height: 40px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cell.X { color: red; }
+        .cell.O { color: blue; }
+        .status { margin: 20px; font-size: 1.2em; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('update_board', data => {
+            updateBoard(data.board);
+            document.querySelector('.status').textContent = `Current Player: ${data.currentPlayer}`;
+        });
+
+        socket.on('game_over', data => {
+            alert(`Game Over! Player ${data.winner} wins!`);
+        });
+
+        function updateBoard(board) {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, index) => {
+                const row = Math.floor(index / 15);
+                const col = index % 15;
+                cell.textContent = board[row][col];
+                cell.className = 'cell ' + (board[row][col] === 'X' ? 'X' : board[row][col] === 'O' ? 'O' : '');
+            });
+        }
+
+        function makeMove(row, col) {
+            socket.emit('make_move', {row, col});
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const board = document.querySelector('.board');
+            for (let row = 0; row < 15; row++) {
+                for (let col = 0; col < 15; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.addEventListener('click', () => makeMove(row, col));
+                    board.appendChild(cell);
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>Wuziqi (Five in a Row)</h1>
+    <div class="status">Current Player: X</div>
+    <div class="board"></div>
+</body>
+</html>
